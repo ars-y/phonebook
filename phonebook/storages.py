@@ -108,6 +108,30 @@ class BasePhoneBook:
         if flush:
             self.flush()
 
+    def upload_from(self, filename: str | Path, _type: str = 'csv') -> None:
+        """Loading contacts data from file."""
+        load_handlers: dict = {
+            'csv': self.__loader_csv,
+        }
+        load_handlers[_type](filename)
+
+    def __loader_csv(self, filename: str | Path):
+        """Loader data from csv file."""
+        with open(filename, 'r', encoding='utf-8') as file:
+            for row in csv.DictReader(file):
+                self._contact: Contact = Contact(
+                    first_name=row.get('first_name'),
+                    last_name=row.get('last_name'),
+                    surname=row.get('surname'),
+                    company=row.get('company'),
+                    work=row.get('work'),
+                    mobile=row.get('mobile')
+                )
+                self._contact._id = concat_dict_values(
+                    self._contact.model_dump(exclude_unset=True)
+                )
+                self.save(flush=False)
+
     def __str__(self) -> str:
         pass
 

@@ -8,7 +8,7 @@ from .utils import concat_dict_values
 
 
 class BasePhoneBook:
-    """Базовая модель телефонного справочника."""
+    """Base model of the Phonebook."""
 
     def __init__(self, contact: Contact | None = None) -> None:
         self._contact = contact
@@ -20,16 +20,18 @@ class BasePhoneBook:
         flush: bool = True
     ) -> None:
         """
-        Сохраняет контакт в базу данных, после
-        чего сбрасывает данные в файл,
-        если ключевой не имеет значения False.
+        Saving Contact object in DB.
+        Flush contacts from DB to text file if `flush` True.
 
-        Аргументы:
-            - **filename**: имя или путь до файла для хранения;
-            - **flush**: ключевой аргумент,
-            флаг для сбрасывания контактов в текстовый файл.
+        Args:
+            - **filename**: name of file or path to file;
+            - **flush**: key argument - boolean flag
+            for flush contacts from DB to text file.
         """
         with shelve.open(filename) as db:
+            if not self._contact._id:
+                self._contact._id = self.__generate_id()
+
             db[self._contact._id] = self._contact
 
         if flush:
@@ -43,15 +45,15 @@ class BasePhoneBook:
         multiple: bool = True
     ) -> Contact | list:
         """
-        Выгружает список контактов из файла.
-        Вернет объект контакта, если убран флаг multiple
-        и задан ID контакта, при наличии его в базе данных.
+        Fetch contacts list from DB.
+        Return single Contact object if multiple flag is False
+        and passed contact ID (if exists in DB).
 
-        Аргументы:
-            - **filename**: имя или путь до файла для хранения;
-            - **contact_id**: ключевой аргумент ID контакта;
-            - **multiple**: ключевой аргумент,
-            флаг для выгрузки списка контактов.
+        Args:
+            - **filename**: name of file or path to file;
+            - **contact_id**: key argument - contact ID;
+            - **multiple**: key argument - boolean flag
+            to fetch all contacts in list.
         """
         data: list = []
         with shelve.open(filename) as db:
@@ -65,14 +67,13 @@ class BasePhoneBook:
 
     def flush(self, filename: str | Path = CONTACTS_FILE) -> None:
         """
-        Сбрасывает контакт в текстовый файл для хранения контактов.
-        Если имя файла или путь не указаны, то используется
-        указанный по умолчанию.
+        Flush contacts from DB to text file.
+        Default path to file taken from constants module.
 
-        Аргументы:
-            - **filename**: имя или путь до файла для хранения;
+        Args:
+            - **filename**: name of file or path to file.
         """
-        contacts: list = self.load()
+        contacts: list[Contact] = self.load()
         with open(filename, 'w', encoding='utf-8') as f:
             rows: list[dict] = [
                 contact.model_dump() for contact in contacts
@@ -92,13 +93,13 @@ class BasePhoneBook:
         flush: bool = True
     ) -> None:
         """
-        Удаляет запись из базы данных.
+        Remove contact from DB.
 
-        Аргументы:
-            - **filename**: имя или путь до файла для хранения;
-            - **contact_id**: ключевой аргумент ID контакта;
-            - **flush**: ключевой аргумент,
-            флаг для сбрасывания контактов в текстовый файл.
+        Args:
+            - **filename**: name of file or path to file;
+            - **contact_id**: key argument - contact ID;
+            - **flush**: key argument - boolean flag
+            for flush contacts from DB to text file.
         """
         with shelve.open(filename) as db:
             key = self._contact._id if not contact_id else contact_id
@@ -109,7 +110,13 @@ class BasePhoneBook:
             self.flush()
 
     def upload_from(self, filename: str | Path, _type: str = 'csv') -> None:
-        """Loading contacts data from file."""
+        """
+        Loading contacts data from file.
+
+        Args:
+            - **filename**: name of file or path to file;
+            - **_type**: file extension.
+        """
         load_handlers: dict = {
             'csv': self.__loader_csv,
         }
@@ -127,36 +134,38 @@ class BasePhoneBook:
                     work=row.get('work'),
                     mobile=row.get('mobile')
                 )
-                self._contact._id = concat_dict_values(
-                    self._contact.model_dump(exclude_unset=True)
-                )
                 self.save(flush=False)
+
+    def __generate_id(self) -> str:
+        """Generate contact ID."""
+        return concat_dict_values(
+            self._contact.model_dump(exclude_unset=True)
+        )
 
     def __str__(self) -> str:
         pass
 
 
 class PhoneBook(BasePhoneBook):
-    """Модель телефонного справочника."""
+    """Model of the Phonebook."""
 
     def __init__(self, contact: Contact | None = None) -> None:
         super().__init__(contact)
 
     def find(self, contact_id: str) -> Contact | None:
-        """Возвращает объект контакта пo его ID."""
+        """Find Contact object by ID and return it."""
         return self.load(contact_id=contact_id, multiple=False)
 
-    def find_all(self, patterns: list[str]) -> list[Contact]:
-        """Возвращает список контактов, по заданным критериям."""
+    def find_all(self, pattern: str) -> list[Contact]:
+        """Find contacts by pattern."""
 
     def update(self) -> None:
-        """Обновляет данные контакта."""
+        """Update Contact data in DB."""
         old_contact: Contact | None = self.find(self._contact._id)
+
+        # TODO: make exception for not exists contact ID
         if not old_contact:
-            raise KeyError('данного контакта не существует')
+            raise KeyError('ID not exists')
 
         self.remove(contact_id=old_contact._id, flush=False)
-        self._contact._id: str = concat_dict_values(
-            self._contact.model_dump(exclude_unset=True)
-        )
         self.save()

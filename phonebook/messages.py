@@ -1,5 +1,6 @@
 from typing import Any, Callable
 
+from .decorators import frame
 from .ioworkers import console
 from .models import Contact
 
@@ -26,7 +27,37 @@ Options:
   5: add work phone;
   6: add mobile phone;
   -s: save contact;
-  -c: cancel operation.
+  -c: cancel operation;
+  -q: quit application.
+"""
+
+    edit_contact_options: str = """
+Options:
+  1: edit first name;
+  2: edit last name;
+  3: edit surname;
+  4: edit company;
+  5: edit work phone;
+  6: edit mobile phone;
+  -s: update contact;
+  -d: delete contact;
+  -c: cancel operation;
+  -q: quit application.
+"""
+
+    contact_detail_options: str = """
+Options:
+  -e: edit contact fields;
+  -c: cancel operation;
+  -q: quit application.
+"""
+
+    find_contacts_options: str = """
+Options:
+  number from 0 to 9 selects a contact from list;
+  -f: retry search query;
+  -c: cancel operation;
+  -q: quit application.
 """
 
 
@@ -39,13 +70,10 @@ class RenderMenuMessage:
     """Rendering menu messages."""
 
     @staticmethod
-    def _render_main_menu(contacts: list[Contact]) -> None:
+    def __render_contact_list(contacts: list[Contact], empty_msg: str) -> None:
         if not contacts:
-            console.write('No contacts')
+            console.write(empty_msg.center(50, ' '))
             return
-
-        console.write('| Contacts |'.center(50, '#'))
-        console.write('\n')
 
         sepr = console.sepr()
         for i, contact in enumerate(contacts):
@@ -53,14 +81,8 @@ class RenderMenuMessage:
             if i < len(contacts) - 1:
                 console.write(sepr)
 
-        console.write('\n')
-        console.write('| add | search | quit |'.center(50, '#'))
-
     @staticmethod
-    def _render_create_contact(contact: Contact) -> None:
-        console.write('| New Contact |'.center(50, '#'))
-        console.write('\n')
-
+    def __render_create_update_contact(contact: Contact) -> None:
         sepr = console.sepr()
 
         contact_data: dict = contact.model_dump(exclude_none=True)
@@ -77,10 +99,33 @@ class RenderMenuMessage:
             f'3. {surname}\n{sepr}\n'
             f'4. {company}\n{sepr}\n'
             f'5. {work}\n{sepr}\n'
-            f'6. {modile}\n'
+            f'6. {modile}'
         )
         console.write(text_message)
-        console.write(''.center(50, '#'))
+
+    @frame(['Contacts'], ['add', 'search', 'quit'])
+    @staticmethod
+    def _render_main_menu(contacts: list[Contact]) -> None:
+        RenderMenuMessage.__render_contact_list(contacts, 'No Contacts')
+
+    @frame(['Search'], ['select', 'retry', 'cancel'])
+    def _render_find_contacts(contacts: list[Contact]) -> None:
+        RenderMenuMessage.__render_contact_list(contacts, 'No Results')
+
+    @frame(['New Contact'], ['select', 'save', 'cancel'])
+    @staticmethod
+    def _render_create_contact(contact: Contact) -> None:
+        RenderMenuMessage.__render_create_update_contact(contact)
+
+    @frame(['Edit Contact'], ['select', 'save', 'delete', 'cancel'])
+    @staticmethod
+    def _render_edit_contact(contact: Contact) -> None:
+        RenderMenuMessage.__render_create_update_contact(contact)
+
+    @frame(['Contact detail'], ['edit', 'cancel'])
+    @staticmethod
+    def _render_contact_detail(contact: Contact) -> None:
+        console.write(contact.card_view)
 
 
 def render(handler: Callable, data: Any) -> None:

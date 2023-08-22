@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from .utils import field_separator
+from .ioworkers import console
 
 
 class ContactBaseModel(BaseModel):
@@ -20,28 +20,25 @@ class Contact(ContactBaseModel):
     @property
     def card_view(self) -> str:
         """Card view of the contact model."""
-        contact_card: list = []
-        sepr: str = field_separator()
+        sepr: str = console.sepr()
+        empty_value: str = ''
 
-        if self.first_name:
-            contact_card.append(f'First name: {self.first_name}{sepr}')
+        _first_name: str = self.first_name if self.first_name else empty_value
+        _last_name: str = self.last_name if self.last_name else empty_value
+        _surname: str = self.surname if self.surname else empty_value
+        _company: str = self.company if self.company else empty_value
+        _mobile: str = self.mobile if self.mobile else empty_value
+        _work: str = self.work if self.work else empty_value
 
-        if self.last_name:
-            contact_card.append(f'Last name: {self.last_name}{sepr}')
-
-        if self.surname:
-            contact_card.append(f'Surname: {self.surname}{sepr}')
-
-        if self.company:
-            contact_card.append(f'Company: {self.company}{sepr}')
-
-        if self.work:
-            contact_card.append(f'Mobile: {self.work}{sepr}')
-
-        if self.mobile:
-            contact_card.append(f'Work: {self.mobile}{sepr}')
-
-        return ''.join(contact_card)
+        contact_card: str = (
+            f'First name: {_first_name}\n{sepr}\n'
+            f'Last name: {_last_name}\n{sepr}\n'
+            f'Surname: {_surname}\n{sepr}\n'
+            f'Company: {_company}\n{sepr}\n'
+            f'Mobile: {_mobile}\n{sepr}\n'
+            f'Work: {_work}'
+        )
+        return contact_card
 
     @property
     def short_view(self) -> str:
@@ -53,3 +50,7 @@ class Contact(ContactBaseModel):
         for name in fields:
             if fields[name]:
                 return fields[name]
+
+    @property
+    def is_empty(self) -> bool:
+        return self.model_dump(exclude_none=True, exclude_unset=True) is None

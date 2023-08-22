@@ -2,9 +2,9 @@ import csv
 import shelve
 from pathlib import Path
 
-from .constants import CONTACTS_FILE, DB_NAME
+from .constants import CONTACTS_FILE, DB_PATH
 from .models import Contact
-from .utils import concat_dict_values
+from .utils import concat_dict_values, contains
 
 
 class BasePhoneBook:
@@ -15,7 +15,7 @@ class BasePhoneBook:
 
     def save(
         self,
-        filename: str | Path = DB_NAME,
+        filename: str | Path = DB_PATH,
         *,
         flush: bool = True
     ) -> None:
@@ -39,7 +39,7 @@ class BasePhoneBook:
 
     def load(
         self,
-        filename: str | Path = DB_NAME,
+        filename: str | Path = DB_PATH,
         *,
         contact_id: str = None,
         multiple: bool = True
@@ -87,7 +87,7 @@ class BasePhoneBook:
 
     def remove(
         self,
-        filename: str | Path = DB_NAME,
+        filename: str | Path = DB_PATH,
         *,
         contact_id: str = None,
         flush: bool = True
@@ -156,16 +156,28 @@ class PhoneBook(BasePhoneBook):
         """Find Contact object by ID and return it."""
         return self.load(contact_id=contact_id, multiple=False)
 
-    def find_all(self, pattern: str) -> list[Contact]:
+    def find_all(
+        self,
+        pattern: str,
+        *,
+        filename: str | Path = DB_PATH
+    ) -> list[Contact]:
         """Find contacts by pattern."""
+        with shelve.open(filename) as db:
+            matches: list = [
+                db[key] for key in db
+                if contains([*db[key].model_dump().values()], pattern)
+            ]
+        return matches
 
     def update(self) -> None:
         """Update Contact data in DB."""
         old_contact: Contact | None = self.find(self._contact._id)
 
-        # TODO: make exception for not exists contact ID
         if not old_contact:
-            raise KeyError('ID not exists')
+            raise KeyError(
+                f'Contact with ID: {self._contact._id} doesn\'t exists'
+            )
 
         self.remove(contact_id=old_contact._id, flush=False)
         self.save()

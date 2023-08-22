@@ -9,4 +9,4 @@ CONTACTS_FILE: Path = CONTACTS_DIR / 'contacts.csv'
 
 DB_DIR: Path = BASE_DIR / 'data'
 
-DB_NAME: str = str(DB_DIR / 'contacts.db')
+DB_PATH: str = str(DB_DIR / 'contacts.db')

@@ -2,22 +2,24 @@ import re
 from .ioworkers import console
 
 
-def validate_field(name: str, value: str) -> str:
-    pattern = r'^(\+)[1-9][0-9\-\(\)\.]{9,15}$'
-    if value and not re.search(pattern, value):
-        raise ValueError(f'invalid value `{value}` for field `{name}`')
+def _validate_phone_number(value: str) -> str:
+    """Validate phone number."""
+    pattern = r'^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$'
+    if not value or (value and not re.search(pattern, value)):
+        raise ValueError('[Err] Invalid phone number')
+
     return value
 
 
-def validate(name: str, value: str) -> str:
+def validate_field(value: str) -> str:
+    """Validate Contact field value."""
     while True:
-
-        try:
-            value = validate_field(name, value)
+        if value == '-c':
             break
 
-        except ValueError as exc:
-            print(exc)
-            value = console.read('Enter value: ')
+        try:
+            return _validate_phone_number(value)
 
-    return value
+        except ValueError as exc:
+            console.write(exc)
+            value = console.read('Enter value: ')

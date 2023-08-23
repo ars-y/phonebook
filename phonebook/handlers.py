@@ -1,9 +1,10 @@
 from typing import Callable
 
-from .storages import PhoneBook
-from .models import Contact
-from .messages import help_message, render, request_action
 from .ioworkers import console
+from .messages import help_message, render, request_action
+from .models import Contact
+from .storages import PhoneBook
+from .utils import replace_item, remove_item
 from .validators import validate_field
 
 
@@ -11,7 +12,7 @@ PAGE_SIZE: int = 10
 
 
 # TODO: make pagination
-def main_menu(context: dict | None = None) -> None:
+def main_menu(context: dict) -> None:
     """
     Main menu handler.
     Display a list contacts sorted by name.
@@ -25,21 +26,10 @@ def main_menu(context: dict | None = None) -> None:
     """
     console.clear()
 
-    context: dict = context or {}
     context['handler'] = main_menu
+    contacts: list[Contact] = context.get('contact_list')
 
-    phone_book: PhoneBook = PhoneBook()
-    contacts: list[Contact] = context.get(
-        'contact_list', phone_book.load()
-    )
-
-    options: dict = {
-        '-a': create_contact,
-        '-f': search_query,
-        '-q': quit_app,
-        '-h': help_info,
-        '--help': help_info,
-    }
+    options: dict = get_allowed_options(main_menu)
     contacts_per_page: list = contacts[:PAGE_SIZE]
     options.update(
         **dict.fromkeys(
@@ -59,63 +49,40 @@ def main_menu(context: dict | None = None) -> None:
     options[action.lower()](context)
 
 
-def create_update_contact(
-    context: dict | None = None,
-    *,
-    mode: str | None = None
-) -> None:
+def create_update_contact(context: dict) -> None:
     """Generic handler for creating and updating contact fields."""
+    console.clear()
+
     handler: str = context.get('handler')
-
-    digits = range(1, 7)
-    options: dict = {
-        '-q': quit_app,
-        '-h': help_info,
-        '--help': help_info,
-    }
-    options.update(**dict.fromkeys((str(i) for i in digits), set_field))
-
-    if mode.startswith('create'):
-        options.update(
-            {
-                '-s': save_contact,
-                '-c': main_menu,
-            }
-        )
-    else:
-        options.update(
-            {
-                '-d': remove_contact,
-                '-s': update_contact,
-                '-c': contact_detail,
-            }
-        )
+    total_fields = range(1, 7)
+    options: dict = get_allowed_options(handler)
+    options.update(**dict.fromkeys((str(i) for i in total_fields), set_field))
 
     contact: Contact = context.get('contact', Contact())
     render(handler, contact)
     action: str = request_action(options)
 
-    if action.isdigit() and int(action) in digits:
-        fileds: dict = dict(zip(digits, contact.model_fields))
+    if action.isdigit() and int(action) in total_fields:
+        fileds: dict = dict(zip(total_fields, contact.model_fields))
         field = fileds[int(action)]
         value = console.read('Enter value: ')
 
         if field in ('mobile', 'work'):
             value = validate_field(value)
 
-        if not value:
-            create_contact(context)
-
         context['field'] = field
         context['value'] = value
 
-    context['contact'] = contact
+    if action == '-c' and handler is not edit_contact:
+        context['contact'] = Contact()
+    else:
+        context['contact'] = contact
 
     console.clear()
     options[action.lower()](context)
 
 
-def create_contact(context: dict | None = None) -> None:
+def create_contact(context: dict) -> None:
     """
     Handler for creating contact.
 
@@ -124,10 +91,10 @@ def create_contact(context: dict | None = None) -> None:
         - cancel operation.
     """
     context['handler'] = create_contact
-    create_update_contact(context, mode=create_contact.__name__)
+    create_update_contact(context)
 
 
-def edit_contact(context: dict | None = None) -> None:
+def edit_contact(context: dict) -> None:
     """
     Handler for editing contact fields.
 
@@ -137,10 +104,10 @@ def edit_contact(context: dict | None = None) -> None:
         - cancel operation.
     """
     context['handler'] = edit_contact
-    create_update_contact(context, mode=edit_contact.__name__)
+    create_update_contact(context)
 
 
-def contact_detail(context: dict | None = None):
+def contact_detail(context: dict):
     """
     Handler for viewing contact detail.
 
@@ -149,14 +116,7 @@ def contact_detail(context: dict | None = None):
         - cancel operation.
     """
     context['handler'] = contact_detail
-
-    options: dict = {
-        '-e': edit_contact,
-        '-c': main_menu,
-        '-q': quit_app,
-        '-h': help_info,
-        '--help': help_info,
-    }
+    options: dict = get_allowed_options(contact_detail)
 
     render(contact_detail, context.get('contact'))
     action: str = request_action(options)
@@ -168,19 +128,19 @@ def contact_detail(context: dict | None = None):
     options[action.lower()](context)
 
 
-def search_query(context: dict | None = None) -> None:
+def search_query(context: dict) -> None:
     """Request a search string."""
     console.clear()
 
     search_string: str = console.read('Enter a search string: ')
     if search_string == '-c':
-        main_menu()
+        main_menu(context)
 
     context['query'] = search_string
     find_contacts(context)
 
 
-def find_contacts(context: dict | None = None) -> None:
+def find_contacts(context: dict) -> None:
     """
     Handler for searching contacts.
 
@@ -191,15 +151,9 @@ def find_contacts(context: dict | None = None) -> None:
     console.clear()
 
     context['handler'] = find_contacts
-    options: dict = {
-        '-f': search_query,
-        '-c': main_menu,
-        '-q': quit_app,
-        '-h': help_info,
-        '--help': help_info,
-    }
-
+    options: dict = get_allowed_options(find_contacts)
     search_string: str = context.get('query')
+
     phone_book: PhoneBook = PhoneBook()
     contacts: list[Contact] = phone_book.find_all(search_string)
 
@@ -223,43 +177,36 @@ def find_contacts(context: dict | None = None) -> None:
     options[action.lower()](context)
 
 
-def save_contact(context: dict | None = None) -> None:
+def save_contact(context: dict) -> None:
     """Handler for saving contact in DB."""
-    contact: Contact = context.get('contact')
-    if not contact.is_empty:
-        phone_book: PhoneBook = PhoneBook(contact)
-        phone_book.save()
+    connect_database(context, save_contact.__name__)
 
 
-def update_contact(context: dict | None = None) -> None:
+def update_contact(context: dict) -> None:
     """Handler for update contact in DB."""
-    contact: Contact = context.get('contact')
-    if not contact.is_empty:
-        phone_book: PhoneBook = PhoneBook(contact)
-        phone_book.update()
+    connect_database(context, update_contact.__name__)
 
 
-def remove_contact(context: dict | None = None) -> None:
+def remove_contact(context: dict) -> None:
     """Handler for remove contact from DB."""
-    contact: Contact = context.get('contact')
-    if not contact.is_empty:
-        phone_book: PhoneBook = PhoneBook(contact)
-        phone_book.remove()
+    connect_database(context, remove_contact.__name__)
 
 
-def set_field(context: dict | None = None) -> None:
+def set_field(context: dict) -> None:
     """Handler for setting value in model field."""
     handler: Callable = context.get('handler')
     contact: Contact = context.get('contact')
     field_name: str = context.get('field')
     field_value: str = context.get('value')
 
-    setattr(contact, field_name, field_value)
-    context['contact'] = contact
+    if field_value:
+        setattr(contact, field_name, field_value)
+        context['contact'] = contact
+
     handler(context)
 
 
-def help_info(context: dict | None = None) -> None:
+def help_info(context: dict) -> None:
     """Handler for printing help info about menu."""
     handler: Callable = context.get('handler')
     handler_name: str = handler.__name__ + '_options'
@@ -269,10 +216,97 @@ def help_info(context: dict | None = None) -> None:
     handler(context)
 
 
+class MenuOptionManager:
+    """Menu options manager."""
+
+    def __init__(self) -> None:
+        self._common_options: dict = {
+            '-q': quit_app,
+            '-h': help_info,
+            '--help': help_info,
+        }
+
+    @property
+    def main_menu_options(self) -> dict:
+        self._common_options.update(
+            {'-a': create_contact, '-f': search_query, }
+        )
+        return self._common_options
+
+    @property
+    def create_contact_options(self) -> dict:
+        self._common_options.update(
+            {'-s': save_contact, '-c': main_menu, }
+        )
+        return self._common_options
+
+    @property
+    def edit_contact_options(self) -> dict:
+        self._common_options.update(
+            {
+                '-d': remove_contact,
+                '-s': update_contact,
+                '-c': contact_detail,
+            }
+        )
+        return self._common_options
+
+    @property
+    def contact_detail_options(self) -> dict:
+        self._common_options.update(
+            {'-e': edit_contact, '-c': main_menu, }
+        )
+        return self._common_options
+
+    @property
+    def find_contacts_options(self) -> dict:
+        self._common_options.update(
+            {'-f': search_query, '-c': main_menu, }
+        )
+        return self._common_options
+
+
+def get_allowed_options(handler: Callable) -> dict:
+    """
+    Return a dict with allowed menu options
+    depending on the handler passed in arguments.
+    """
+    attr_name: str = handler.__name__ + '_options'
+    return getattr(MenuOptionManager(), attr_name)
+
+
+def connect_database(context: dict, mode: str) -> None:
+    """
+    Connects to the database and applies operations
+    depending on the selected mode.
+    """
+    contact: Contact = context.get('contact')
+    contacts: list[Contact] = context.get('contact_list')
+    if contact.is_empty:
+        return
+
+    phone_book: PhoneBook = PhoneBook(contact)
+
+    if mode.startswith('save'):
+        phone_book.save()
+        contacts.append(contact)
+
+    elif mode.startswith('update'):
+        phone_book.update()
+        context['contact_list'] = replace_item(contacts, contact)
+
+    elif mode.startswith('remove'):
+        phone_book.remove()
+        context['contact_list'] = remove_item(contacts, contact)
+
+    context['contact'] = Contact()
+
+
 def run_app():
     """Running application in cycle."""
+    context: dict = {'contact_list': PhoneBook().load()}
     while True:
-        main_menu()
+        main_menu(context)
 
 
 def quit_app(context: dict | None = None):

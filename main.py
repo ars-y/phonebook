@@ -1,5 +1,4 @@
 import sys
-from os import error
 
 from phonebook.config import argument_parser, FILE_INIT_KEY
 from phonebook.handlers import run_app
@@ -8,7 +7,7 @@ from phonebook.handlers import run_app
 def main():
     try:
         run_app()
-    except error as exc:
+    except Exception as exc:
         exc_message: str = str(exc)
         if exc_message.startswith('[Errno 2]'):
             exc_info: str = (
@@ -19,6 +18,7 @@ def main():
             exc_message += exc_info
 
         sys.stdout.write(exc_message)
+        sys.exit(1)
 
 
 if __name__ == '__main__':

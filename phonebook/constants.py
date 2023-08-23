@@ -14,3 +14,5 @@ DB_PATH: str = str(DB_DIR / 'contacts.db')
 FILE_INIT_KEY: str = '--init'
 
 UPLOAD_FILE_KEY: str = '--upload'
+
+PAGE_SIZE: int = 6

@@ -1,18 +1,22 @@
 from typing import Any, Callable
 
+from .constants import PAGE_SIZE
 from .decorators import frame
 from .ioworkers import console
 from .models import Contact
 
 
+first, *_, last = range(PAGE_SIZE)
+
+
 class MessagesInfo:
 
-    main_menu_options: str = """
+    main_menu_options: str = f"""
 Options:
-  number from 0 to 9 selects a contact from list;
+  number from {first} to {last} selects a contact from list;
   -a: add new contact;
-  -n: next ten contacts from list;
-  -p: previous ten contacts from list;
+  -n: next page;
+  -p: previous page;
   -f: search contact;
   -l: fill contacts from file;
   -q: quit application.
@@ -52,9 +56,11 @@ Options:
   -q: quit application.
 """
 
-    find_contacts_options: str = """
+    find_contacts_options: str = f"""
 Options:
-  number from 0 to 9 selects a contact from list;
+  number from {first} to {last} selects a contact from list;
+  -n: next page;
+  -p: previous page;
   -f: retry search query;
   -c: cancel operation;
   -q: quit application.
@@ -102,12 +108,12 @@ class RenderMenuMessage:
         )
         console.write(text_message)
 
-    @frame(['Contacts'], ['add', 'search', 'quit'])
+    @frame(['Contacts'], ['next', 'prev', 'add', 'search', 'quit'])
     @staticmethod
     def _render_main_menu(contacts: list[Contact]) -> None:
         RenderMenuMessage.__render_contact_list(contacts, 'No Contacts')
 
-    @frame(['Search'], ['select', 'retry', 'cancel'])
+    @frame(['Search'], ['next', 'prev', 'select', 'retry', 'cancel'])
     def _render_find_contacts(contacts: list[Contact]) -> None:
         RenderMenuMessage.__render_contact_list(contacts, 'No Results')
 

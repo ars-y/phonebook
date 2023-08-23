@@ -76,3 +76,18 @@ def remove_item(items: list, value: Any) -> list:
         - **value**: any type that can be compared.
     """
     return [item for item in items if item != value]
+
+
+def get_paginate_bound(data: dict) -> tuple[int, int]:
+    """Return slice boundaries."""
+    current_page: int = data.get('page')
+    per_page: int = data.get('per_page')
+    total_pages: int = data.get('total_pages')
+
+    if 1 <= current_page <= total_pages:
+        begin: int = (current_page - 1)*per_page
+        end: int = current_page*per_page
+
+        return begin, end
+
+    return 0, per_page

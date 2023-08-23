@@ -85,21 +85,20 @@ class RenderMenuMessage:
     def __render_create_update_contact(contact: Contact) -> None:
         sepr = console.sepr()
 
-        contact_data: dict = contact.model_dump(exclude_none=True)
-        first_name: str = contact_data.get('first_name', 'First name')
-        last_name: str = contact_data.get('last_name', 'Last name')
-        surname: str = contact_data.get('surname', 'Surname')
-        company: str = contact_data.get('company', 'Company')
-        work: str = contact_data.get('work', 'Add work phone')
-        modile: str = contact_data.get('mobile', 'Add mobile phone')
+        first_name: str = contact.first_name if contact.first_name else 'First name'
+        last_name: str = contact.last_name if contact.last_name else 'Last name'
+        surname: str = contact.surname if contact.surname else 'Surname'
+        company: str = contact.company if contact.company else 'Company'
+        modile: str = contact.mobile if contact.mobile else 'Add mobile phone'
+        work: str = contact.work if contact.work else 'Add work phone'
 
         text_message: str = (
             f'1. {first_name}\n{sepr}\n'
             f'2. {last_name}\n{sepr}\n'
             f'3. {surname}\n{sepr}\n'
             f'4. {company}\n{sepr}\n'
-            f'5. {work}\n{sepr}\n'
-            f'6. {modile}'
+            f'5. {modile}\n{sepr}\n'
+            f'6. {work}'
         )
         console.write(text_message)
 

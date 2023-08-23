@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+
 from .ioworkers import console
 
 
@@ -10,8 +11,23 @@ class ContactBaseModel(BaseModel):
     last_name: str | None = None
     surname: str | None = None
     company: str | None = None
-    work: str | None = None
     mobile: str | None = None
+    work: str | None = None
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, self.__class__):
+            this: dict = self.model_dump(
+                exclude_none=True, exclude_unset=True
+            )
+            other: dict = other.model_dump(
+                exclude_none=True, exclude_unset=True
+            )
+
+            for field in this:
+                if field in other:
+                    return this[field].lower() == other[field].lower()
+
+        return super().__eq__(other)
 
 
 class Contact(ContactBaseModel):
@@ -53,4 +69,4 @@ class Contact(ContactBaseModel):
 
     @property
     def is_empty(self) -> bool:
-        return self.model_dump(exclude_none=True, exclude_unset=True) is None
+        return not self.model_dump(exclude_none=True, exclude_unset=True)

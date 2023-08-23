@@ -15,5 +15,6 @@ def frame(headers: list[str], footers: list[str]):
 
             console.write('\n')
             console.write(footer.center(50, '#'))
+            console.write('\n')
         return wrapper
     return frame_decorator

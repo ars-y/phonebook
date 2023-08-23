@@ -10,3 +10,7 @@ CONTACTS_FILE: Path = CONTACTS_DIR / 'contacts.csv'
 DB_DIR: Path = BASE_DIR / 'data'
 
 DB_PATH: str = str(DB_DIR / 'contacts.db')
+
+FILE_INIT_KEY: str = '--init'
+
+UPLOAD_FILE_KEY: str = '--upload'

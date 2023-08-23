@@ -65,24 +65,36 @@ class BasePhoneBook:
 
         return data
 
-    def flush(self, filename: str | Path = CONTACTS_FILE) -> None:
+    def flush(
+        self,
+        filename: str | Path = CONTACTS_FILE,
+        *,
+        removed: bool = False
+    ) -> None:
         """
         Flush contacts from DB to text file.
         Default path to file taken from constants module.
 
         Args:
-            - **filename**: name of file or path to file.
+            - **filename**: name of file or path to file;
+            - **removed**: key argument - boolean flag
+            doesn't flush removed contact in to file.
         """
         contacts: list[Contact] = self.load()
         with open(filename, 'w', encoding='utf-8') as f:
             rows: list[dict] = [
                 contact.model_dump() for contact in contacts
             ]
-            row: dict = self._contact.model_dump()
-            if row not in rows:
-                rows.append(row)
+
+            if not removed:
+                row: dict = self._contact.model_dump()
+                if row not in rows:
+                    rows.append(row)
+            else:
+                row: dict = Contact().model_dump()
 
             writer = csv.DictWriter(f, row.keys())
+            writer.writeheader()
             writer.writerows(rows)
 
     def remove(
@@ -107,9 +119,9 @@ class BasePhoneBook:
                 del db[key]
 
         if flush:
-            self.flush()
+            self.flush(removed=True)
 
-    def upload_from(self, filename: str | Path, _type: str = 'csv') -> None:
+    def upload_from(self, filename: str | Path) -> None:
         """
         Loading contacts data from file.
 
@@ -117,10 +129,11 @@ class BasePhoneBook:
             - **filename**: name of file or path to file;
             - **_type**: file extension.
         """
+        ext: str = Path(filename).suffix
         load_handlers: dict = {
-            'csv': self.__loader_csv,
+            '.csv': self.__loader_csv,
         }
-        load_handlers[_type](filename)
+        load_handlers[ext](filename)
 
     def __loader_csv(self, filename: str | Path):
         """Loader data from csv file."""
@@ -131,8 +144,8 @@ class BasePhoneBook:
                     last_name=row.get('last_name'),
                     surname=row.get('surname'),
                     company=row.get('company'),
-                    work=row.get('work'),
-                    mobile=row.get('mobile')
+                    mobile=row.get('mobile'),
+                    work=row.get('work')
                 )
                 self.save(flush=False)
 

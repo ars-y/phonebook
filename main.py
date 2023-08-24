@@ -23,6 +23,13 @@ def main():
 
 if __name__ == '__main__':
 
+    major, minor, *_ = sys.version_info
+    if major < 3 and minor < 10:
+        sys.stdout.write(
+            'Python version below 3.10 isn\'t currently supported'
+        )
+        sys.exit()
+
     if len(sys.argv) > 1:
         argument_parser()
 

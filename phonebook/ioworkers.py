@@ -3,6 +3,9 @@ import sys
 from typing import Any
 
 
+FIELD_SEP_LENGTH: int = 30
+
+
 class ConsoleIO:
     """Interacts with console I/O."""
 
@@ -27,7 +30,7 @@ class ConsoleIO:
         return input(prompt)
 
     @staticmethod
-    def sepr(sep_char: str = '-', length: int = 30) -> str:
+    def sepr(sep_char: str = '-', length: int = FIELD_SEP_LENGTH) -> str:
         """Return separator."""
         return sep_char*length
 

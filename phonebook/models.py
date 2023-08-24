@@ -70,3 +70,6 @@ class Contact(ContactBaseModel):
     @property
     def is_empty(self) -> bool:
         return not self.model_dump(exclude_none=True, exclude_unset=True)
+
+
+TOTAL_FIELDS: int = len(Contact.model_fields)

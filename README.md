@@ -13,7 +13,7 @@ Phonebook is a console application for contact management
 * The list of contacts is displayed by pages. By default, 6 contacts are displayed per page (the most suitable size for a standard terminal window). You can change the number of contacts per page through the `PAGE_SIZE` constant variable in the `constants.py` module of the project;
 * For each menu there is a help information with description of available actions. Type `h` or `help` to see it.
 
-[!demo-gif](presentation/sample.gif)
+![demo-gif](presentation/sample.gif)
 
 ## System Requirements
 * [Python >= 3.10)](https://www.python.org/downloads/)

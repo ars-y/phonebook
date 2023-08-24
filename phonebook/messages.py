@@ -1,21 +1,17 @@
 from typing import Any, Callable
 
-from .constants import PAGE_SIZE, Button
+from .constants import FRAME_SIZE, FIRST, LAST, Button, FrameLabel
 from .decorators import frame
 from .ioworkers import console
-from .models import Contact
-
-
-first, *_, last = range(PAGE_SIZE)
+from .models import Contact, TOTAL_FIELDS
 
 
 def _get_numbered_fields(fileds_names: tuple, mode: str) -> str:
-    total_fields: int = len(Contact.model_fields)
     numbered_fields: list = []
-    for number, field in zip(range(1, total_fields + 1), fileds_names):
+    for number, field in zip(range(1, TOTAL_FIELDS + 1), fileds_names):
         numbered_fields.append(f'  {number}: {mode} {field};')
 
-        if number < total_fields:
+        if number < TOTAL_FIELDS:
             numbered_fields.append('\n')
 
     return ''.join(numbered_fields)
@@ -34,7 +30,7 @@ class MessagesInfo:
 
     main_menu_options: str = f"""
 Options:
-  number from {first} to {last} selects a contact from list;
+  number from {FIRST} to {LAST} selects a contact from list;
   [{Button.ADD}]: add new contact;
   [{Button.NEXT}]: next page;
   [{Button.PREV}]: previous page;
@@ -68,7 +64,7 @@ Options:
 
     find_contacts_options: str = f"""
 Options:
-  number from {first} to {last} selects a contact from list;
+  number from {FIRST} to {LAST} selects a contact from list;
   [{Button.NEXT}]: next page;
   [{Button.PREV}]: previous page;
   [{Button.FIND}]: retry search query;
@@ -93,7 +89,7 @@ class RenderMenuMessage:
         contacts, current_page, total_pages = data
 
         if not contacts:
-            console.write(empty_msg.center(50, ' '))
+            console.write(empty_msg.center(FRAME_SIZE, ' '))
             return
 
         sepr = console.sepr()
@@ -103,7 +99,9 @@ class RenderMenuMessage:
                 console.write(sepr)
 
         if total_pages:
-            console.write(f'Page: {current_page}/{total_pages}'.rjust(50, ' '))
+            console.write(
+                f'Page: {current_page}/{total_pages}'.rjust(FRAME_SIZE, ' ')
+            )
 
     @staticmethod
     def __render_create_update_contact(contact: Contact) -> None:
@@ -126,26 +124,26 @@ class RenderMenuMessage:
         )
         console.write(text_message)
 
-    @frame(['Contacts'], ['next', 'prev', 'add', 'find', 'quit'])
+    @frame([FrameLabel.MAIN_HEADER], [*FrameLabel.MAIN_FOOTER])
     @staticmethod
     def _render_main_menu(data: tuple[list[Contact, int, int]]) -> None:
         RenderMenuMessage.__render_contact_list(data, 'No Contacts')
 
-    @frame(['Search'], ['next', 'prev', 'select', 'find', 'cancel'])
+    @frame([FrameLabel.FIND_HEADER], [*FrameLabel.FIND_FOOTER])
     def _render_find_contacts(data: tuple[list[Contact, int, int]]) -> None:
         RenderMenuMessage.__render_contact_list(data, 'No Results')
 
-    @frame(['New Contact'], ['select', 'save', 'cancel'])
+    @frame([FrameLabel.CREATE_HEADER], [*FrameLabel.CREATE_FOOTER])
     @staticmethod
     def _render_create_contact(contact: Contact) -> None:
         RenderMenuMessage.__render_create_update_contact(contact)
 
-    @frame(['Edit Contact'], ['select', 'save', 'delete', 'cancel'])
+    @frame([FrameLabel.EDIT_HEADER], [*FrameLabel.EDIT_FOOTER])
     @staticmethod
     def _render_edit_contact(contact: Contact) -> None:
         RenderMenuMessage.__render_create_update_contact(contact)
 
-    @frame(['Contact detail'], ['edit', 'cancel'])
+    @frame([FrameLabel.DETAIL_HEADER], [*FrameLabel.DETAIL_FOOTER])
     @staticmethod
     def _render_contact_detail(contact: Contact) -> None:
         console.write(contact.card_view)

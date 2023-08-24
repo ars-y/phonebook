@@ -3,7 +3,7 @@ from typing import Callable
 from .constants import PAGE_SIZE, Button
 from .ioworkers import console
 from .messages import help_message, render, request_action
-from .models import Contact
+from .models import Contact, TOTAL_FIELDS
 from .storages import PhoneBook
 from .utils import (
     calc_total_pages,
@@ -20,7 +20,7 @@ def main_menu(context: dict) -> None:
     Display a list contacts sorted by name.
 
     Available:
-        - pagination with 10 contacts per page;
+        - pagination contacts;
         - add new contact;
         - select contact from list;
         - search contact;
@@ -67,7 +67,7 @@ def create_update_contact(context: dict) -> None:
 
     handler: str = context.get('handler')
     contact: Contact = context.get('contact', Contact())
-    total_fields = range(1, len(contact.model_fields) + 1)
+    total_fields = range(1, TOTAL_FIELDS + 1)
     options: dict = get_allowed_options(handler)
     options.update(**dict.fromkeys((str(i) for i in total_fields), set_field))
 
@@ -162,6 +162,7 @@ def find_contacts(context: dict) -> None:
     Handler for searching contacts.
 
     Available:
+        - pagination contacts;
         - retry search request;
         - cancel operation.
     """

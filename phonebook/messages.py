@@ -1,6 +1,6 @@
 from typing import Any, Callable
 
-from .constants import PAGE_SIZE
+from .constants import PAGE_SIZE, Button
 from .decorators import frame
 from .ioworkers import console
 from .models import Contact
@@ -9,61 +9,71 @@ from .models import Contact
 first, *_, last = range(PAGE_SIZE)
 
 
+def _get_numbered_fields(fileds_names: tuple, mode: str) -> str:
+    total_fields: int = len(Contact.model_fields)
+    numbered_fields: list = []
+    for number, field in zip(range(1, total_fields + 1), fileds_names):
+        numbered_fields.append(f'  {number}: {mode} {field};')
+
+        if number < total_fields:
+            numbered_fields.append('\n')
+
+    return ''.join(numbered_fields)
+
+
 class MessagesInfo:
+    """Help message store."""
+
+    __fields_names: tuple = (
+        'first name', 'last name', 'surname',
+        'company', 'work phone', 'mobile phone'
+    )
+
+    __add_fields: str = _get_numbered_fields(__fields_names, 'add')
+    __edit_fields: str = _get_numbered_fields(__fields_names, 'edit')
 
     main_menu_options: str = f"""
 Options:
   number from {first} to {last} selects a contact from list;
-  -a: add new contact;
-  -n: next page;
-  -p: previous page;
-  -f: search contact;
-  -l: fill contacts from file;
-  -q: quit application.
+  [{Button.ADD}]: add new contact;
+  [{Button.NEXT}]: next page;
+  [{Button.PREV}]: previous page;
+  [{Button.FIND}]: search contact;
+  [{Button.QUIT}]: quit application.
 """
 
-    create_contact_options: str = """
+    create_contact_options: str = f"""
 Options:
-  1: add first name;
-  2: add last name;
-  3: add surname;
-  4: add company;
-  5: add work phone;
-  6: add mobile phone;
-  -s: save contact;
-  -c: cancel operation;
-  -q: quit application.
+{__add_fields}
+  [{Button.SAVE}]: save contact;
+  [{Button.CANCEL}]: cancel operation;
+  [{Button.QUIT}]: quit application.
 """
 
-    edit_contact_options: str = """
+    edit_contact_options: str = f"""
 Options:
-  1: edit first name;
-  2: edit last name;
-  3: edit surname;
-  4: edit company;
-  5: edit work phone;
-  6: edit mobile phone;
-  -s: update contact;
-  -d: delete contact;
-  -c: cancel operation;
-  -q: quit application.
+{__edit_fields}
+  [{Button.SAVE}]: update contact;
+  [{Button.DELETE}]: delete contact;
+  [{Button.CANCEL}]: cancel operation;
+  [{Button.QUIT}]: quit application.
 """
 
-    contact_detail_options: str = """
+    contact_detail_options: str = f"""
 Options:
-  -e: edit contact fields;
-  -c: cancel operation;
-  -q: quit application.
+  [{Button.EDIT}]: edit contact fields;
+  [{Button.CANCEL}]: cancel operation;
+  [{Button.QUIT}]: quit application.
 """
 
     find_contacts_options: str = f"""
 Options:
   number from {first} to {last} selects a contact from list;
-  -n: next page;
-  -p: previous page;
-  -f: retry search query;
-  -c: cancel operation;
-  -q: quit application.
+  [{Button.NEXT}]: next page;
+  [{Button.PREV}]: previous page;
+  [{Button.FIND}]: retry search query;
+  [{Button.CANCEL}]: cancel operation;
+  [{Button.QUIT}]: quit application.
 """
 
 
@@ -76,7 +86,12 @@ class RenderMenuMessage:
     """Rendering menu messages."""
 
     @staticmethod
-    def __render_contact_list(contacts: list[Contact], empty_msg: str) -> None:
+    def __render_contact_list(
+        data: tuple[list[Contact, int, int]],
+        empty_msg: str
+    ) -> None:
+        contacts, current_page, total_pages = data
+
         if not contacts:
             console.write(empty_msg.center(50, ' '))
             return
@@ -86,6 +101,9 @@ class RenderMenuMessage:
             console.write(f'{i}: {contact.short_view}')
             if i < len(contacts) - 1:
                 console.write(sepr)
+
+        if total_pages:
+            console.write(f'Page: {current_page}/{total_pages}'.rjust(50, ' '))
 
     @staticmethod
     def __render_create_update_contact(contact: Contact) -> None:
@@ -108,14 +126,14 @@ class RenderMenuMessage:
         )
         console.write(text_message)
 
-    @frame(['Contacts'], ['next', 'prev', 'add', 'search', 'quit'])
+    @frame(['Contacts'], ['next', 'prev', 'add', 'find', 'quit'])
     @staticmethod
-    def _render_main_menu(contacts: list[Contact]) -> None:
-        RenderMenuMessage.__render_contact_list(contacts, 'No Contacts')
+    def _render_main_menu(data: tuple[list[Contact, int, int]]) -> None:
+        RenderMenuMessage.__render_contact_list(data, 'No Contacts')
 
-    @frame(['Search'], ['next', 'prev', 'select', 'retry', 'cancel'])
-    def _render_find_contacts(contacts: list[Contact]) -> None:
-        RenderMenuMessage.__render_contact_list(contacts, 'No Results')
+    @frame(['Search'], ['next', 'prev', 'select', 'find', 'cancel'])
+    def _render_find_contacts(data: tuple[list[Contact, int, int]]) -> None:
+        RenderMenuMessage.__render_contact_list(data, 'No Results')
 
     @frame(['New Contact'], ['select', 'save', 'cancel'])
     @staticmethod
@@ -144,11 +162,11 @@ def request_action(allowed_options: dict) -> str:
     """Allowed action request."""
     action: str = console.read(
             'Select action or '
-            'type -h (or --help) to display available commands: '
+            'type h (or help) to display available commands: '
         )
     while action.lower() not in allowed_options:
         action = console.read(
             'No such option. '
-            'Enter -h (or --help) to display available commands: '
+            'Enter h (or help) to display available commands: '
         )
     return action

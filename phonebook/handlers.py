@@ -1,11 +1,16 @@
 from typing import Callable
 
-from .constants import PAGE_SIZE
+from .constants import PAGE_SIZE, Button
 from .ioworkers import console
 from .messages import help_message, render, request_action
 from .models import Contact
 from .storages import PhoneBook
-from .utils import get_paginate_bound, replace_item, remove_item
+from .utils import (
+    calc_total_pages,
+    get_paginate_bound,
+    replace_item,
+    remove_item
+)
 from .validators import validate_field
 
 
@@ -35,10 +40,15 @@ def main_menu(context: dict) -> None:
         )
     )
 
-    render(main_menu, contacts_per_page)
+    current_page: int = context.get('page')
+    total_pages: int = context.get('total_pages')
+    render_data: tuple = (
+        contacts_per_page, current_page, total_pages
+    )
+    render(main_menu, render_data)
 
     action: str = request_action(options)
-    if action == '-f':
+    if action == Button.FIND:
         context['page'] = 1
     else:
         context['callback'] = action
@@ -75,10 +85,13 @@ def create_update_contact(context: dict) -> None:
         context['field'] = field
         context['value'] = value
 
-    if action == '-c' and handler is not edit_contact:
+    if action == Button.CANCEL and handler is not edit_contact:
         context['contact'] = Contact()
     else:
         context['contact'] = contact
+
+    contacs: list = context.get('contact_list')
+    context['total_pages'] = calc_total_pages(contacs)
 
     console.clear()
     options[action.lower()](context)
@@ -123,7 +136,7 @@ def contact_detail(context: dict):
     render(contact_detail, context.get('contact'))
     action: str = request_action(options)
 
-    if action == '-c' and 'contact' in context:
+    if action == Button.CANCEL and 'contact' in context:
         context['contact'] = Contact()
 
     console.clear()
@@ -135,7 +148,9 @@ def search_query(context: dict) -> None:
     console.clear()
 
     search_string: str = console.read('Enter a search string: ')
-    if search_string == '-c':
+    if not search_string:
+        contacs: list = context.get('contact_list')
+        context['total_pages'] = calc_total_pages(contacs)
         main_menu(context)
 
     context['query'] = search_string
@@ -161,7 +176,14 @@ def find_contacts(context: dict) -> None:
     begin, end = get_paginate_bound(context)
     contacts_per_page: list = contacts[begin:end]
 
-    render(find_contacts, contacts_per_page)
+    total_pages: int = calc_total_pages(contacts)
+    context['total_pages'] = total_pages
+
+    current_page: int = context.get('page')
+    render_data: tuple = (
+        contacts_per_page, current_page, total_pages
+    )
+    render(find_contacts, render_data)
 
     if not contacts:
         console.write(f'Search string: {search_string}')
@@ -174,8 +196,11 @@ def find_contacts(context: dict) -> None:
 
     action: str = request_action(options)
 
-    if action == '-c':
+    if action == Button.CANCEL:
         context['page'] = 1
+        contacts: list = context.get('contact_list')
+        context['total_pages'] = calc_total_pages(contacts)
+
     else:
         context['callback'] = action
 
@@ -209,10 +234,10 @@ def page_changer(context: dict) -> None:
     total_pages: int = context.get('total_pages')
     handler: Callable = context.get('handler')
 
-    if action == '-n' and current_page < total_pages:
+    if action == Button.NEXT and current_page < total_pages:
         current_page += 1
 
-    if action == '-p' and current_page > 1:
+    if action == Button.PREV and current_page > 1:
         current_page -= 1
 
     context['page'] = current_page
@@ -248,19 +273,19 @@ class MenuOptionManager:
 
     def __init__(self) -> None:
         self._common_options: dict = {
-            '-q': quit_app,
-            '-h': help_info,
-            '--help': help_info,
+            Button.QUIT: quit_app,
+            Button.HELP: help_info,
+            Button.HELP_L: help_info,
         }
 
     @property
     def main_menu_options(self) -> dict:
         self._common_options.update(
             {
-                '-a': create_contact,
-                '-f': search_query,
-                '-n': page_changer,
-                '-p': page_changer,
+                Button.ADD: create_contact,
+                Button.FIND: search_query,
+                Button.NEXT: page_changer,
+                Button.PREV: page_changer,
             }
         )
         return self._common_options
@@ -268,7 +293,10 @@ class MenuOptionManager:
     @property
     def create_contact_options(self) -> dict:
         self._common_options.update(
-            {'-s': save_contact, '-c': main_menu, }
+            {
+                Button.SAVE: save_contact,
+                Button.CANCEL: main_menu,
+            }
         )
         return self._common_options
 
@@ -276,9 +304,9 @@ class MenuOptionManager:
     def edit_contact_options(self) -> dict:
         self._common_options.update(
             {
-                '-d': remove_contact,
-                '-s': update_contact,
-                '-c': contact_detail,
+                Button.DELETE: remove_contact,
+                Button.SAVE: update_contact,
+                Button.CANCEL: contact_detail,
             }
         )
         return self._common_options
@@ -286,7 +314,10 @@ class MenuOptionManager:
     @property
     def contact_detail_options(self) -> dict:
         self._common_options.update(
-            {'-e': edit_contact, '-c': main_menu, }
+            {
+                Button.EDIT: edit_contact,
+                Button.CANCEL: main_menu,
+            }
         )
         return self._common_options
 
@@ -294,10 +325,10 @@ class MenuOptionManager:
     def find_contacts_options(self) -> dict:
         self._common_options.update(
             {
-                '-f': search_query,
-                '-c': main_menu,
-                '-n': page_changer,
-                '-p': page_changer,
+                Button.FIND: search_query,
+                Button.CANCEL: main_menu,
+                Button.NEXT: page_changer,
+                Button.PREV: page_changer,
             }
         )
         return self._common_options
@@ -339,18 +370,17 @@ def connect_database(context: dict, mode: str) -> None:
     context['contact'] = Contact()
     context['contact_list'] = contacts
     context['page'] = 1
-    per_page: int = context.get('per_page')
-    context['total_pages'] = (len(contacts) + per_page - 1) // per_page
+    context['total_pages'] = calc_total_pages(contacts)
 
 
 def run_app():
     """Running application in cycle."""
     context: dict = {}
     contacts: list[Contact] = PhoneBook().load()
-    total_pages: int = (len(contacts) + PAGE_SIZE - 1) // PAGE_SIZE
+
     context['page'] = 1
     context['per_page'] = PAGE_SIZE
-    context['total_pages'] = total_pages
+    context['total_pages'] = calc_total_pages(contacts)
     context['contact_list'] = contacts
 
     while True:

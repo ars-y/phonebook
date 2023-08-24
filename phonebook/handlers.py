@@ -197,7 +197,7 @@ def find_contacts(context: dict) -> None:
 
     action: str = request_action(options)
 
-    if action == Button.CANCEL:
+    if action not in (Button.PREV, Button.NEXT):
         context['page'] = 1
         contacts: list = context.get('contact_list')
         context['total_pages'] = calc_total_pages(contacts)

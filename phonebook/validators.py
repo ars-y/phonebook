@@ -6,7 +6,7 @@ from .ioworkers import console
 def _validate_phone_number(value: str) -> str:
     """Validate phone number."""
     pattern = r'^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$'
-    if not value or (value and not re.search(pattern, value)):
+    if value and not re.search(pattern, value):
         raise ValueError('[Err] Invalid phone number')
 
     return value
@@ -15,8 +15,8 @@ def _validate_phone_number(value: str) -> str:
 def validate_field(value: str) -> str:
     """Validate Contact field value."""
     while True:
-        if value == '-c':
-            break
+        if not value:
+            return
 
         try:
             return _validate_phone_number(value)

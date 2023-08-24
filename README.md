@@ -16,7 +16,7 @@ Phonebook is a console application for contact management
 ![demo-gif](presentation/sample.gif)
 
 ## System Requirements
-* [Python >= 3.10)](https://www.python.org/downloads/)
+* [Python (>= 3.10)](https://www.python.org/downloads/)
 * The application supports Linux/MacOS/Windows
 
 ## Setup

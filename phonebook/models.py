@@ -23,9 +23,9 @@ class ContactBaseModel(BaseModel):
                 exclude_none=True, exclude_unset=True
             )
 
-            for field in this:
-                if field in other:
-                    return this[field].lower() == other[field].lower()
+            return all(
+                [other.get(key) == value for key, value in this.items()]
+            )
 
         return super().__eq__(other)
 

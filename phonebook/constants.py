@@ -40,7 +40,7 @@ class Button:
 
 FIRST, *_, LAST = range(PAGE_SIZE)
 
-field_no_first, *_, field_no_last = range(TOTAL_FIELDS)
+field_no_first, *_, field_no_last = range(1, TOTAL_FIELDS + 1)
 
 
 class FrameLabel:

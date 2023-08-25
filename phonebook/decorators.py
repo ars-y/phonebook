@@ -1,13 +1,18 @@
+from typing import Callable
+
 from .constants import FRAME_SIZE
 from .ioworkers import console
 
 
-def frame(headers: list[str], footers: list[str]):
+def frame(
+    headers: list[str] | None = None,
+    footers: list[str] | None = None
+) -> Callable:
     """Decorator to create header and footer frame."""
-    def frame_decorator(func):
-        def wrapper(*args, **kwargs):
-            header: str = '| ' + ' | '.join(headers) + ' |'
-            footer: str = '| ' + ' | '.join(footers) + ' |'
+    def frame_decorator(func: Callable) -> Callable:
+        def wrapper(*args, **kwargs) -> None:
+            header: str = '| ' + ' | '.join(headers) + ' |' if headers else ''
+            footer: str = '| ' + ' | '.join(footers) + ' |' if footers else ''
 
             console.write(header.center(FRAME_SIZE, '#'))
             console.write('\n')

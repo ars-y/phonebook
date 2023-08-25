@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from .ioworkers import console
+from .utils import concat_dict_values
 
 
 class ContactBaseModel(BaseModel):
@@ -65,14 +66,16 @@ class Contact(ContactBaseModel):
         Brief view of the contact model.
         Return first not None field value.
         """
-        fields: dict = self.model_dump()
+        fields: dict[str, str] = self.model_dump()
         for name in fields:
-            if fields[name]:
+            if fields[name] and not fields[name].isspace():
                 return fields[name]
 
     @property
     def is_empty(self) -> bool:
-        return not self.model_dump(exclude_none=True, exclude_unset=True)
+        return not concat_dict_values(
+            self.model_dump(exclude_none=True, exclude_unset=True)
+        )
 
 
 TOTAL_FIELDS: int = len(Contact.model_fields)

@@ -7,7 +7,7 @@ from phonebook.handlers import run_app
 def main():
     try:
         run_app()
-    except Exception as exc:
+    except OSError as exc:
         exc_message: str = str(exc)
         if exc_message.startswith('[Errno 2]'):
             exc_info: str = (

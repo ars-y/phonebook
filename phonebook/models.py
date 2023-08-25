@@ -24,7 +24,7 @@ class ContactBaseModel(BaseModel):
             )
 
             return all(
-                [other.get(key) == value for key, value in this.items()]
+                [other[key].lower() == this[key].lower() for key in this]
             )
 
         return super().__eq__(other)

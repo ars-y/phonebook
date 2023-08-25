@@ -126,8 +126,7 @@ class BasePhoneBook:
         Loading contacts data from file.
 
         Args:
-            - **filename**: name of file or path to file;
-            - **_type**: file extension.
+            - **filename**: name of file or path to file.
         """
         ext: str = Path(filename).suffix
         load_handlers: dict = {
@@ -135,7 +134,7 @@ class BasePhoneBook:
         }
         load_handlers[ext](filename)
 
-    def __loader_csv(self, filename: str | Path):
+    def __loader_csv(self, filename: str | Path) -> None:
         """Loader data from csv file."""
         with open(filename, 'r', encoding='utf-8') as file:
             for row in csv.DictReader(file):

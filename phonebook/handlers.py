@@ -91,7 +91,7 @@ def create_update_contact(context: dict) -> None:
         context['contact'] = contact
 
     contacs: list = context.get('contact_list')
-    context['total_pages'] = calc_total_pages(contacs)
+    context['total_pages'] = calc_total_pages(contacs, context.get('per_page'))
 
     console.clear()
     options[action.lower()](context)
@@ -150,7 +150,9 @@ def search_query(context: dict) -> None:
     search_string: str = console.read('Enter a search string: ')
     if not search_string:
         contacs: list = context.get('contact_list')
-        context['total_pages'] = calc_total_pages(contacs)
+        context['total_pages'] = calc_total_pages(
+            contacs, context.get('per_page')
+        )
         main_menu(context)
 
     context['query'] = search_string
@@ -177,7 +179,7 @@ def find_contacts(context: dict) -> None:
     begin, end = get_paginate_bound(context)
     contacts_per_page: list = contacts[begin:end]
 
-    total_pages: int = calc_total_pages(contacts)
+    total_pages: int = calc_total_pages(contacts, context.get('per_page'))
     context['total_pages'] = total_pages
 
     current_page: int = context.get('page')
@@ -200,7 +202,9 @@ def find_contacts(context: dict) -> None:
     if action not in (Button.PREV, Button.NEXT):
         context['page'] = 1
         contacts: list = context.get('contact_list')
-        context['total_pages'] = calc_total_pages(contacts)
+        context['total_pages'] = calc_total_pages(
+            contacts, context.get('per_page')
+        )
 
     else:
         context['callback'] = action
@@ -371,7 +375,9 @@ def connect_database(context: dict, mode: str) -> None:
     context['contact'] = Contact()
     context['contact_list'] = contacts
     context['page'] = 1
-    context['total_pages'] = calc_total_pages(contacts)
+    context['total_pages'] = calc_total_pages(
+        contacts, context.get('per_page')
+    )
 
 
 def run_app():
@@ -381,7 +387,7 @@ def run_app():
 
     context['page'] = 1
     context['per_page'] = PAGE_SIZE
-    context['total_pages'] = calc_total_pages(contacts)
+    context['total_pages'] = calc_total_pages(contacts, PAGE_SIZE)
     context['contact_list'] = contacts
 
     while True:

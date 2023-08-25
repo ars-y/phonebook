@@ -1,7 +1,5 @@
 from typing import Any
 
-from .constants import PAGE_SIZE
-
 
 def concat_dict_values(data: dict) -> str:
     """Concatenation of all dict values in single string."""
@@ -95,7 +93,7 @@ def get_paginate_bound(data: dict) -> tuple[int, int]:
     return 0, per_page
 
 
-def calc_total_pages(items: list, per_page: int = PAGE_SIZE) -> int:
+def calc_total_pages(items: list, per_page: int) -> int:
     """
     Return the total number of pages
     based on total items and page size.

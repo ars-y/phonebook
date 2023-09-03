@@ -29,6 +29,13 @@ class ConsoleIO:
         """Read a string from input."""
         return input(prompt)
 
+    def click(self, continue_key: str = 'Press ENTER to continue ') -> None:
+        """
+        Print a message from argument `continue_key`
+        and wait for any key to be entered.
+        """
+        self.read(continue_key)
+
     @staticmethod
     def sepr(sep_char: str = '-', length: int = FIELD_SEP_LENGTH) -> str:
         """Return separator."""

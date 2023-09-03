@@ -22,7 +22,7 @@ Phonebook is a console application for contact management
 ## Setup
 1. Clone a repository
 ```bash
-$ git@github.com:ars-y/phonebook.git
+$ git clone git@github.com:ars-y/phonebook.git
 ```
 2. Go to the project directory and install the virtual environment
 ```bash

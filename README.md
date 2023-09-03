@@ -37,9 +37,9 @@ $ python3 -m venv venv
     ```shell
     > .\venv\Scripts\activate
     ```
-4. Update the `pip` package manager and install dependencies
+4. Install dependencies
 ```bash
-$ pip install -U pip; pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
 5. Run application
 ```bash

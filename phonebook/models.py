@@ -66,10 +66,19 @@ class Contact(ContactBaseModel):
         Brief view of the contact model.
         Return first not None field value.
         """
-        fields: dict[str, str] = self.model_dump()
-        for name in fields:
-            if fields[name] and not fields[name].isspace():
-                return fields[name]
+        if self.first_name and self.last_name:
+            return ' '.join([self.first_name, self.last_name])
+
+        if self.first_name and self.company:
+            return ' '.join([self.first_name, self.company])
+
+        if self.last_name and self.company:
+            return ' '.join([self.last_name, self.company])
+
+        model_as_dict: dict[str, str] = self.model_dump()
+        for field in model_as_dict:
+            if model_as_dict[field]:
+                return model_as_dict[field]
 
     @property
     def is_empty(self) -> bool:

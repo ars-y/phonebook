@@ -1,3 +1,4 @@
+import colorama
 from pathlib import Path
 
 from .models import TOTAL_FIELDS
@@ -19,7 +20,13 @@ UPLOAD_FILE_KEY: str = '--upload'
 
 PAGE_SIZE: int = 6
 
+FRAME_DESIGN: str = '#'
+
 FRAME_SIZE: int = 80
+
+FIRST, *_, LAST = range(PAGE_SIZE)
+
+FIRST_FIELD, *_, LAST_FIELD = range(1, TOTAL_FIELDS + 1)
 
 
 class Button:
@@ -38,47 +45,27 @@ class Button:
     SAVE: str = 's'
 
 
-FIRST, *_, LAST = range(PAGE_SIZE)
+class ReportState:
+    """Operation report state."""
 
-field_no_first, *_, field_no_last = range(1, TOTAL_FIELDS + 1)
-
-
-class FrameLabel:
-    """Labels for frames."""
-
-    MAIN_HEADER: str = 'Contacts'
-    MAIN_FOOTER: tuple = (
-        f'[{Button.PREV}] prev',
-        f'[{Button.NEXT}] next',
-        f'[{FIRST}-{LAST}] select',
-        f'[{Button.ADD}] add',
-        f'[{Button.FIND}] find',
-        f'[{Button.QUIT}] quit',
+    DECLINE: str = ''.join(
+        (
+            colorama.Fore.RED,
+            'CHANGES DECLINED',
+            colorama.Fore.RESET,
+        )
     )
-    FIND_HEADER: str = 'Search'
-    FIND_FOOTER: tuple = (
-        f'[{Button.PREV}] prev',
-        f'[{Button.NEXT}] next',
-        f'[{FIRST}-{LAST}] select',
-        f'[{Button.FIND}] find',
-        f'[{Button.CANCEL}] cancel',
-        f'[{Button.QUIT}] quit',
+    ACCEPT: str = ''.join(
+        (
+            colorama.Fore.GREEN,
+            'CHANGES ACCEPTED',
+            colorama.Fore.RESET,
+        )
     )
-    CREATE_HEADER: str = 'New Contact'
-    CREATE_FOOTER: tuple = (
-        f'[{field_no_first}-{field_no_last}] select',
-        f'[{Button.SAVE}] save',
-        f'[{Button.CANCEL}] cancel',
-    )
-    EDIT_HEADER: str = 'Edit Contact'
-    EDIT_FOOTER: tuple = (
-        f'[{field_no_first}-{field_no_last}] select',
-        f'[{Button.SAVE}] save',
-        f'[{Button.DELETE}] delete',
-        f'[{Button.CANCEL}] cancel',
-    )
-    DETAIL_HEADER: str = 'Contact detail'
-    DETAIL_FOOTER: tuple = (
-        f'[{Button.EDIT}] edit',
-        f'[{Button.CANCEL}] cancel',
+    DONOTHING: str = ''.join(
+        (
+            colorama.Fore.YELLOW,
+            'NO CHANGES APPLIED',
+            colorama.Fore.RESET,
+        )
     )

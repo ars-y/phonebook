@@ -1,7 +1,7 @@
 import sys
 
-from phonebook.config import argument_parser, FILE_INIT_KEY
-from phonebook.handlers import run_app
+from phonebook import argument_parser, FILE_INIT_KEY
+from phonebook import run_app
 
 
 def main():

@@ -35,9 +35,9 @@ $ python3 -m venv venv
     ```shell
     > .\venv\Scripts\activate
     ```
-4. Обновить менеджер пакетов `pip` и установить зависимости
+4. Установить зависимости
 ```bash
-$ pip install -U pip; pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
 5. Запустить приложение
 ```bash
@@ -57,5 +57,5 @@ $ python main.py --init
 $ python main.py --upload=/path/to/your/file/contacts.csv
 ```
 
-### Credits
+## Автор
 Arslan Yadov

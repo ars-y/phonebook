@@ -13,7 +13,8 @@ Phonebook is a console application for contact management
 * The list of contacts is displayed by pages. By default, 6 contacts are displayed per page (the most suitable size for a standard terminal window). You can change the number of contacts per page through the `PAGE_SIZE` constant variable in the `constants.py` module of the project;
 * For each menu there is a help information with description of available actions. Type `h` or `help` to see it.
 
-![demo-gif](presentation/sample.gif)
+![demo-gif](presentation/sample_01.gif)
+![demo-gif](presentation/sample_02.gif)
 
 ## System Requirements
 * [Python (>= 3.10)](https://www.python.org/downloads/)
@@ -37,9 +38,9 @@ $ python3 -m venv venv
     ```shell
     > .\venv\Scripts\activate
     ```
-4. Update the `pip` package manager and install dependencies
+4. Install dependencies
 ```bash
-$ pip install -U pip; pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
 5. Run application
 ```bash

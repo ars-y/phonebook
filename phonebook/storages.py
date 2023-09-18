@@ -1,6 +1,8 @@
 import csv
+import json
 import shelve
 from pathlib import Path
+from tqdm import tqdm
 
 from .constants import CONTACTS_FILE, DB_PATH
 from .models import Contact
@@ -29,9 +31,7 @@ class BasePhoneBook:
             for flush contacts from DB to text file.
         """
         with shelve.open(filename) as db:
-            if not self._contact._id:
-                self._contact._id = self.__generate_id()
-
+            self._contact._id = self.__generate_id()
             db[self._contact._id] = self._contact
 
         if flush:
@@ -131,21 +131,21 @@ class BasePhoneBook:
         ext: str = Path(filename).suffix
         load_handlers: dict = {
             '.csv': self.__loader_csv,
+            '.json': self.__loader_json,
         }
         load_handlers[ext](filename)
 
     def __loader_csv(self, filename: str | Path) -> None:
         """Loader data from csv file."""
         with open(filename, 'r', encoding='utf-8') as file:
-            for row in csv.DictReader(file):
-                self._contact: Contact = Contact(
-                    first_name=row.get('first_name'),
-                    last_name=row.get('last_name'),
-                    surname=row.get('surname'),
-                    company=row.get('company'),
-                    mobile=row.get('mobile'),
-                    work=row.get('work')
-                )
+            for row in tqdm(list(csv.DictReader(file))):
+                self._contact: Contact = _set_contact_fields(row)
+                self.save(flush=False)
+
+    def __loader_json(self, filename: str | Path) -> None:
+        with open(filename, 'rb') as file:
+            for entry in tqdm(json.load(file)):
+                self._contact: Contact = _set_contact_fields(entry)
                 self.save(flush=False)
 
     def __generate_id(self) -> str:
@@ -193,3 +193,15 @@ class PhoneBook(BasePhoneBook):
 
         self.remove(contact_id=old_contact._id, flush=False)
         self.save()
+
+
+def _set_contact_fields(data: dict) -> Contact:
+    """Returns the Contact model with the fields filled in."""
+    return Contact(
+        first_name=data.get('first_name'),
+        last_name=data.get('last_name'),
+        surname=data.get('surname'),
+        company=data.get('company'),
+        mobile=data.get('mobile'),
+        work=data.get('work')
+    )

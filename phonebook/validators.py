@@ -16,7 +16,7 @@ def validate_field(value: str) -> str:
     """Validate Contact field value."""
     while True:
         if not value:
-            return
+            return value
 
         try:
             return _validate_phone_number(value)

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Iterable
 
 
 def concat_dict_values(data: dict) -> str:
@@ -56,17 +56,6 @@ def contains(
     return binary_search(elements, target, 0, len(elements) - 1)
 
 
-def replace_item(items: list, value: Any) -> list:
-    """
-    Return a new list with item replaced by the new value.
-
-    Args:
-        - **items**: list object;
-        - **value**: any type that can be compared.
-    """
-    return [value if item == value else item for item in items]
-
-
 def remove_item(items: list, value: Any) -> list:
     """
     Return a new list without old value.
@@ -78,7 +67,7 @@ def remove_item(items: list, value: Any) -> list:
     return [item for item in items if item != value]
 
 
-def get_paginate_bound(data: dict) -> tuple[int, int]:
+def get_paginate_bound(**data: dict) -> tuple[int, int]:
     """Return slice boundaries."""
     current_page: int = data.get('page')
     per_page: int = data.get('per_page')
@@ -99,3 +88,18 @@ def calc_total_pages(items: list, per_page: int) -> int:
     based on total items and page size.
     """
     return (len(items) + per_page - 1) // per_page
+
+
+def get_eges(length: int) -> tuple[int, int]:
+    """Returns the first and last value of a range."""
+    if length <= 2:
+        return 1, length
+
+    first, *_, second = range(1, length + 1)
+    return first, second
+
+
+def remove_keys_from_dict(keys: Iterable, context: dict) -> None:
+    """Removes keys from a dictionary."""
+    for key in keys:
+        context.pop(key, None)
